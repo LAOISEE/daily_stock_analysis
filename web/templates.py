@@ -558,6 +558,10 @@ button:active {
     border-radius: 0.25rem;
     line-height: 1.4;
 }
+
+.task-detail-actions {
+    margin-top: 0.5rem;
+}
 """
 
 
@@ -742,6 +746,9 @@ def render_config_page(
             detailHtml = '<div class="task-detail" id="detail_' + taskId + '">' +
                 '<div class="task-detail-row"><span class="label">趋势</span><span>' + (result.trend_prediction || '-') + '</span></div>' +
                 (result.analysis_summary ? '<div class="task-detail-summary">' + result.analysis_summary.substring(0, 100) + '...</div>' : '') +
+                '<div class="task-detail-actions">' +
+                    '<a class="report-link" href="/report?id=' + encodeURIComponent(taskId) + '" target="_blank" onclick="event.stopPropagation();">打开完整报告</a>' +
+                '</div>' +
                 '</div>';
         }
 
