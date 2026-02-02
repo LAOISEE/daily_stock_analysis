@@ -1097,30 +1097,29 @@ def render_report_page(
 
         return sections_html
 
-    dashboard = result.get("dashboard") if isinstance(result.get("dashboard"), dict) else {}
-    core = dashboard.get("core_conclusion", {}) if isinstance(dashboard, dict) else {}
-    summary_text = core.get("one_sentence") or result.get("analysis_summary")
-
-    summary = format_value(summary_text) or "<div class=\"report-text\">暂无摘要</div>"
-
     sections = [
-        ("结论摘要", summary),
+        ("综合分析", result.get("analysis_summary")),
         ("操作建议", result.get("operation_advice")),
         ("趋势预测", result.get("trend_prediction")),
-        ("综合评分", f"{result.get('sentiment_score', '-') } 分"),
-        ("置信度", result.get("confidence_level")),
+        ("核心看点", result.get("key_points")),
+        ("买卖理由", result.get("buy_reason")),
+        ("风险提示", result.get("risk_warning")),
+        ("走势分析", result.get("trend_analysis")),
+        ("短期展望", result.get("short_term_outlook")),
+        ("中期展望", result.get("medium_term_outlook")),
+        ("技术面分析", result.get("technical_analysis")),
+        ("均线分析", result.get("ma_analysis")),
+        ("量能分析", result.get("volume_analysis")),
+        ("形态分析", result.get("pattern_analysis")),
+        ("基本面分析", result.get("fundamental_analysis")),
+        ("板块地位", result.get("sector_position")),
+        ("公司亮点", result.get("company_highlights")),
+        ("新闻摘要", result.get("news_summary")),
+        ("市场情绪", result.get("market_sentiment")),
+        ("热点话题", result.get("hot_topics")),
+        ("决策仪表盘", render_dashboard(result.get("dashboard"))),
+        ("数据来源", result.get("data_sources")),
     ]
-
-    sniper_points = {}
-    if isinstance(dashboard, dict):
-        battle_plan = dashboard.get("battle_plan", {}) or {}
-        if isinstance(battle_plan, dict):
-            sniper_points = battle_plan.get("sniper_points", {}) or {}
-
-    if isinstance(sniper_points, dict) and sniper_points:
-        points_items = [f"{k}: {v}" for k, v in sniper_points.items() if str(v).strip()]
-        if points_items:
-            sections.append(("狙击点位", render_list(points_items)))
 
     section_html = ""
     for title, value in sections:
@@ -1142,6 +1141,11 @@ def render_report_page(
         <p class=\"text-muted\">任务状态：{html.escape(status)} · 任务ID：{html.escape(task_id)}</p>
       </div>
       <a class=\"report-back\" href=\"/\">← 返回</a>
+    </div>
+
+    <div class="report-section">
+      <h3>摘要</h3>
+      {summary}
     </div>
 
     {section_html}
