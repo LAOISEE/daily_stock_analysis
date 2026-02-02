@@ -1023,7 +1023,8 @@ def render_report_page(
         text = str(value).strip()
         if not text:
             return ""
-        return f"<div class=\"report-text\">{html.escape(text).replace('\n', '<br>')}</div>"
+        safe_text = html.escape(text).replace("\n", "<br>")
+        return f"<div class=\"report-text\">{safe_text}</div>"
 
     def render_section(title: str, body_html: str) -> str:
         if not body_html:
