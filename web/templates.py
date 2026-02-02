@@ -1127,13 +1127,13 @@ def render_report_page(
         ("新闻摘要", result.get("news_summary")),
         ("市场情绪", result.get("market_sentiment")),
         ("热点话题", result.get("hot_topics")),
-        ("决策仪表盘", render_dashboard(result.get("dashboard"))),
+        ("决策仪表盘", result.get("dashboard")),
         ("数据来源", result.get("data_sources")),
     ]
 
     section_html = ""
     for title, value in sections:
-        formatted = value if isinstance(value, str) and value.lstrip().startswith('<') else format_value(value)
+        formatted = format_value(value)
         if not formatted:
             continue
         section_html += f"""
