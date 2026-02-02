@@ -1133,7 +1133,10 @@ def render_report_page(
 
     section_html = ""
     for title, value in sections:
-        formatted = format_value(value)
+        if title == "决策仪表盘":
+            formatted = render_dashboard(value)
+        else:
+            formatted = format_value(value)
         if not formatted:
             continue
         section_html += f"""
