@@ -1045,6 +1045,14 @@ def render_report_page(
         if not isinstance(dashboard, dict):
             return format_value(dashboard)
 
+        def format_kv(value: object) -> str:
+            if isinstance(value, dict):
+                parts = [f"{k}={v}" for k, v in value.items()]
+                return ", ".join(parts)
+            if isinstance(value, list):
+                return ", ".join(str(v) for v in value)
+            return str(value)
+
         sections_html = ""
         core = dashboard.get("core_conclusion", {}) or {}
         if core:
@@ -1088,7 +1096,7 @@ def render_report_page(
 
         data_view = dashboard.get("data_perspective", {}) or {}
         if isinstance(data_view, dict) and data_view:
-            data_items = [f"{k}: {v}" for k, v in data_view.items() if str(v).strip()]
+            data_items = [f"{k}: {format_kv(v)}" for k, v in data_view.items() if str(v).strip()]
             if data_items:
                 sections_html += render_section("数据视角", render_list(data_items))
 
