@@ -24,7 +24,7 @@ from datetime import datetime
 from typing import Dict, Any, TYPE_CHECKING
 
 from web.services import get_config_service, get_analysis_service
-from web.templates import render_config_page
+from web.templates import render_config_page, render_report_page, render_error_page
 from src.enums import ReportType
 
 if TYPE_CHECKING:
@@ -99,6 +99,7 @@ class PageHandler:
     
     def __init__(self):
         self.config_service = get_config_service()
+        self.analysis_service = get_analysis_service()
     
     def handle_index(self) -> Response:
         """处理首页请求 GET /"""
@@ -118,6 +119,28 @@ class PageHandler:
         normalized = self.config_service.set_stock_list(stock_list)
         env_filename = self.config_service.get_env_filename()
         body = render_config_page(normalized, env_filename, message="已保存")
+        return HtmlResponse(body)
+
+    def handle_report(self, query: Dict[str, list]) -> Response:
+        """
+        处理完整报告页面 GET /report?id=xxx
+        """
+        task_id_list = query.get("id", [])
+        if not task_id_list or not task_id_list[0].strip():
+            body = render_error_page(400, "缺少必填参数: id (任务ID)")
+            return HtmlResponse(body, status=HTTPStatus.BAD_REQUEST)
+
+        task_id = task_id_list[0].strip()
+        task = self.analysis_service.get_task_status(task_id)
+        if task is None:
+            body = render_error_page(404, "任务不存在", f"任务ID: {task_id}")
+            return HtmlResponse(body, status=HTTPStatus.NOT_FOUND)
+
+        if task.get("status") != "completed":
+            body = render_error_page(400, "任务尚未完成", f"任务状态: {task.get('status')}")
+            return HtmlResponse(body, status=HTTPStatus.BAD_REQUEST)
+
+        body = render_report_page(task_id, task)
         return HtmlResponse(body)
 
 

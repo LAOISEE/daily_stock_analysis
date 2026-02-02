@@ -13,6 +13,7 @@ Web 模板层 - HTML 页面生成
 from __future__ import annotations
 
 import html
+import json
 from typing import Optional
 
 
@@ -428,6 +429,16 @@ button:active {
     white-space: nowrap;
 }
 
+.task-title .report-link {
+    font-size: 0.7rem;
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.task-title .report-link:hover {
+    text-decoration: underline;
+}
+
 .task-meta {
     display: flex;
     gap: 0.75rem;
@@ -733,6 +744,10 @@ def render_config_page(
                 (result.analysis_summary ? '<div class="task-detail-summary">' + result.analysis_summary.substring(0, 100) + '...</div>' : '') +
                 '</div>';
         }
+
+        const reportLink = status === 'completed'
+            ? '<a class="report-link" href="/report?id=' + encodeURIComponent(taskId) + '" target="_blank" onclick="event.stopPropagation();">完整报告</a>'
+            : '';
         
         return '<div class="task-card ' + status + '" id="task_' + taskId + '" onclick="toggleDetail(\\''+taskId+'\\')">' +
             '<div class="task-status">' + statusIcon + '</div>' +
@@ -740,6 +755,7 @@ def render_config_page(
                 '<div class="task-title">' +
                     '<span class="code">' + code + '</span>' +
                     '<span class="name">' + (result.name || code) + '</span>' +
+                    reportLink +
                 '</div>' +
                 '<div class="task-meta">' +
                     '<span>⏱ ' + formatTime(task.start_time) + '</span>' +
@@ -972,6 +988,136 @@ def render_config_page(
     page = render_base(
         title="A/H股自选配置 | WebUI",
         content=content
+    )
+    return page.encode("utf-8")
+
+
+def render_report_page(
+    task_id: str,
+    task: dict
+) -> bytes:
+    """
+    渲染完整报告页面
+
+    Args:
+        task_id: 任务ID
+        task: 任务数据
+    """
+    result = task.get("full_result") or task.get("result") or {}
+    code = task.get("code") or result.get("code", "-")
+    name = result.get("name", code)
+    status = task.get("status", "-")
+
+    def format_value(value: object) -> str:
+        if value is None:
+            return ""
+        if isinstance(value, (dict, list)):
+            return f"<pre>{html.escape(json.dumps(value, ensure_ascii=False, indent=2))}</pre>"
+        text = str(value).strip()
+        if not text:
+            return ""
+        return f"<div class=\"report-text\">{html.escape(text).replace('\n', '<br>')}</div>"
+
+    sections = [
+        ("综合分析", result.get("analysis_summary")),
+        ("操作建议", result.get("operation_advice")),
+        ("趋势预测", result.get("trend_prediction")),
+        ("核心看点", result.get("key_points")),
+        ("买卖理由", result.get("buy_reason")),
+        ("风险提示", result.get("risk_warning")),
+        ("走势分析", result.get("trend_analysis")),
+        ("短期展望", result.get("short_term_outlook")),
+        ("中期展望", result.get("medium_term_outlook")),
+        ("技术面分析", result.get("technical_analysis")),
+        ("均线分析", result.get("ma_analysis")),
+        ("量能分析", result.get("volume_analysis")),
+        ("形态分析", result.get("pattern_analysis")),
+        ("基本面分析", result.get("fundamental_analysis")),
+        ("板块地位", result.get("sector_position")),
+        ("公司亮点", result.get("company_highlights")),
+        ("新闻摘要", result.get("news_summary")),
+        ("市场情绪", result.get("market_sentiment")),
+        ("热点话题", result.get("hot_topics")),
+        ("决策仪表盘", result.get("dashboard")),
+        ("数据来源", result.get("data_sources")),
+    ]
+
+    section_html = ""
+    for title, value in sections:
+        formatted = format_value(value)
+        if not formatted:
+            continue
+        section_html += f"""
+        <div class=\"report-section\">
+          <h3>{html.escape(title)}</h3>
+          {formatted}
+        </div>
+        """
+
+    summary = format_value(result.get("analysis_summary")) or "<div class=\"report-text\">暂无摘要</div>"
+
+    content = f"""
+  <div class=\"container\">
+    <div class=\"report-header\">
+      <div>
+        <h2>📈 {html.escape(name)} <span class=\"code-badge\">{html.escape(code)}</span></h2>
+        <p class=\"text-muted\">任务状态：{html.escape(status)} · 任务ID：{html.escape(task_id)}</p>
+      </div>
+      <a class=\"report-back\" href=\"/\">← 返回</a>
+    </div>
+
+    <div class=\"report-section\">
+      <h3>摘要</h3>
+      {summary}
+    </div>
+
+    {section_html}
+  </div>
+"""
+
+    extra_css = """
+    .report-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .report-back {
+        color: var(--primary);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+    .report-back:hover { text-decoration: underline; }
+    .report-section {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+    }
+    .report-section h3 {
+        margin-top: 0;
+        font-size: 1rem;
+    }
+    .report-text {
+        line-height: 1.6;
+        color: var(--text);
+    }
+    pre {
+        background: #f1f5f9;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    """
+
+    page = render_base(
+        title=f"{name} 完整报告",
+        content=content,
+        extra_css=extra_css
     )
     return page.encode("utf-8")
 

@@ -296,6 +296,12 @@ def create_default_router() -> Router:
         lambda form: page_handler.handle_update(form),
         "更新配置"
     )
+
+    router.register(
+        "/report", "GET",
+        lambda q: page_handler.handle_report(q),
+        "完整报告"
+    )
     
     # === API 路由 ===
     router.register(

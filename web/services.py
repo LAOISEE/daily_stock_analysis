@@ -278,12 +278,14 @@ class AnalysisService:
                     "trend_prediction": result.trend_prediction,
                     "analysis_summary": result.analysis_summary,
                 }
+                full_result = result.to_dict()
                 
                 with self._tasks_lock:
                     self._tasks[task_id].update({
                         "status": "completed",
                         "end_time": datetime.now().isoformat(),
-                        "result": result_data
+                        "result": result_data,
+                        "full_result": full_result
                     })
                 
                 logger.info(f"[AnalysisService] 股票 {code} 分析完成: {result.operation_advice}")
