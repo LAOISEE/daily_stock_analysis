@@ -1025,6 +1025,78 @@ def render_report_page(
             return ""
         return f"<div class=\"report-text\">{html.escape(text).replace('\n', '<br>')}</div>"
 
+    def render_section(title: str, body_html: str) -> str:
+        if not body_html:
+            return ""
+        return f"""
+        <div class=\"report-section\">
+          <h3>{html.escape(title)}</h3>
+          {body_html}
+        </div>
+        """
+
+    def render_list(items: list[str]) -> str:
+        if not items:
+            return ""
+        list_items = "".join(f"<li>{html.escape(str(item))}</li>" for item in items if str(item).strip())
+        return f"<ul class=\"report-list\">{list_items}</ul>" if list_items else ""
+
+    def render_dashboard(dashboard: object) -> str:
+        if not isinstance(dashboard, dict):
+            return format_value(dashboard)
+
+        sections_html = ""
+        core = dashboard.get("core_conclusion", {}) or {}
+        if core:
+            core_lines = []
+            if core.get("one_sentence"):
+                core_lines.append(f"<div class=\"report-text\">{html.escape(str(core.get('one_sentence')))}</div>")
+            meta_items = []
+            if core.get("signal_type"):
+                meta_items.append(f"信号：{core.get('signal_type')}")
+            if core.get("time_sensitivity"):
+                meta_items.append(f"时效：{core.get('time_sensitivity')}")
+            if meta_items:
+                core_lines.append(render_list(meta_items))
+
+            pos_advice = core.get("position_advice", {}) or {}
+            advice_items = []
+            if pos_advice.get("no_position"):
+                advice_items.append(f"空仓：{pos_advice.get('no_position')}")
+            if pos_advice.get("has_position"):
+                advice_items.append(f"持仓：{pos_advice.get('has_position')}")
+            if advice_items:
+                core_lines.append(render_list(advice_items))
+
+            sections_html += render_section("核心结论", "".join(core_lines))
+
+        battle_plan = dashboard.get("battle_plan", {}) or {}
+        if battle_plan:
+            battle_html = ""
+            sniper_points = battle_plan.get("sniper_points", {}) or {}
+            if isinstance(sniper_points, dict) and sniper_points:
+                points_items = [f"{k}: {v}" for k, v in sniper_points.items() if str(v).strip()]
+                if points_items:
+                    battle_html += "<div class=\"report-subtitle\">狙击点位</div>" + render_list(points_items)
+
+            checklist = battle_plan.get("action_checklist", []) or []
+            if isinstance(checklist, list) and checklist:
+                battle_html += "<div class=\"report-subtitle\">行动清单</div>" + render_list(checklist)
+
+            if battle_html:
+                sections_html += render_section("作战计划", battle_html)
+
+        data_view = dashboard.get("data_perspective", {}) or {}
+        if isinstance(data_view, dict) and data_view:
+            data_items = [f"{k}: {v}" for k, v in data_view.items() if str(v).strip()]
+            if data_items:
+                sections_html += render_section("数据视角", render_list(data_items))
+
+        if not sections_html:
+            return format_value(dashboard)
+
+        return sections_html
+
     sections = [
         ("综合分析", result.get("analysis_summary")),
         ("操作建议", result.get("operation_advice")),
@@ -1045,7 +1117,7 @@ def render_report_page(
         ("新闻摘要", result.get("news_summary")),
         ("市场情绪", result.get("market_sentiment")),
         ("热点话题", result.get("hot_topics")),
-        ("决策仪表盘", result.get("dashboard")),
+        ("决策仪表盘", render_dashboard(result.get("dashboard"))),
         ("数据来源", result.get("data_sources")),
     ]
 
@@ -1107,9 +1179,21 @@ def render_report_page(
         margin-top: 0;
         font-size: 1rem;
     }
+    .report-subtitle {
+        margin: 0.5rem 0 0.25rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--text);
+    }
     .report-text {
         line-height: 1.6;
         color: var(--text);
+    }
+    .report-list {
+        margin: 0.25rem 0 0;
+        padding-left: 1.1rem;
+        color: var(--text);
+        line-height: 1.6;
     }
     pre {
         background: #f1f5f9;
