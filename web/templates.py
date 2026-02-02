@@ -1097,6 +1097,8 @@ def render_report_page(
 
         return sections_html
 
+    summary = format_value(result.get("analysis_summary")) or "<div class=\"report-text\">暂无摘要</div>"
+
     sections = [
         ("综合分析", result.get("analysis_summary")),
         ("操作建议", result.get("operation_advice")),
