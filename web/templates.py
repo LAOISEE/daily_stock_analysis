@@ -1133,7 +1133,7 @@ def render_report_page(
 
     section_html = ""
     for title, value in sections:
-        formatted = value if isinstance(value, str) and value.startswith('<') else format_value(value)
+        formatted = value if isinstance(value, str) and value.lstrip().startswith('<') else format_value(value)
         if not formatted:
             continue
         section_html += f"""
